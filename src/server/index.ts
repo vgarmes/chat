@@ -27,7 +27,7 @@ await db.execute(
     `
 );
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log('user has connected');
 
   socket.on('disconnect', () => {
@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
   socket.on('chat message', async (msg) => {
     let result: ResultSet;
     try {
-      const result = await db.execute({
+      result = await db.execute({
         sql: 'INSERT INTO messages (content) VALUES (:msg)',
         args: { msg },
       });
@@ -47,6 +47,19 @@ io.on('connection', (socket) => {
     }
     io.emit('chat message', msg, result.lastInsertRowid.toString());
   });
+
+  if (!socket.recovered) {
+    try {
+      const results = await db.execute({
+        sql: 'SELECT id, content FROM messages WHERE id > ?',
+        args: [socket.handshake.auth.serverOffset ?? 0],
+      });
+
+      results.rows.forEach((row) => {
+        socket.emit('chat message', row.content, row.id.toString());
+      });
+    } catch (error) {}
+  }
 });
 
 app.use(logger('dev'));
