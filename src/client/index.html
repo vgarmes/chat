@@ -7,11 +7,16 @@
     <script type="module">
       import { io } from 'https://cdn.socket.io/4.6.0/socket.io.esm.min.js';
 
-      const username = 'Otacon'; // mock user, authentication needed
+      // mock user, authentication needed
+      const users = ['Snake', 'Campbell', 'Otacon', 'Naomi', 'Meryl'];
+      function getRandomUser() {
+        const index = Math.floor(Math.random() * 5);
+        return users[index];
+      }
 
       const socket = io({
         auth: {
-          username,
+          username: getRandomUser(),
           serverOffset: 0,
         },
       });
